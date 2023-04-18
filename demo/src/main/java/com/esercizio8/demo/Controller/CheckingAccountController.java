@@ -7,7 +7,6 @@ import com.esercizio8.demo.Dto.Responses.CheckingAccount.CheckingAccountCreateRe
 import com.esercizio8.demo.Dto.Responses.CheckingAccount.CheckingAccountUpdateResponseDto;
 import com.esercizio8.demo.Service.CheckingAccountService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +18,7 @@ import java.util.UUID;
 public class CheckingAccountController {
 
     CheckingAccountService checkingAccountService;
-    @Autowired
+
     public CheckingAccountController(CheckingAccountService checkingAccountService) {
         this.checkingAccountService = checkingAccountService;
     }

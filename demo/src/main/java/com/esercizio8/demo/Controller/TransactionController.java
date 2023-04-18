@@ -1,17 +1,14 @@
 package com.esercizio8.demo.Controller;
 
 import com.esercizio8.demo.Dto.Requests.Transaction.TransactionDepositRequestDto;
-import com.esercizio8.demo.Dto.Requests.Transaction.TransactionHistoryRequestDto;
 import com.esercizio8.demo.Dto.Requests.Transaction.TransactionWithdrawalRequestDto;
 import com.esercizio8.demo.Dto.Responses.Transaction.TransactionDepositResponseDto;
 import com.esercizio8.demo.Dto.Responses.Transaction.TransactionHistoryResponseDto;
 import com.esercizio8.demo.Dto.Responses.Transaction.TransactionWithdrawalResponseDto;
 import com.esercizio8.demo.Service.TransactionService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -21,8 +18,6 @@ import java.util.UUID;
 public class TransactionController {
 
     TransactionService transactionService;
-
-    @Autowired
     public TransactionController(TransactionService transactionService) { this.transactionService = transactionService; }
 
     @PostMapping("/deposit/{id}")

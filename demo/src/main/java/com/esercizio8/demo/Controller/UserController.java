@@ -5,7 +5,6 @@ import com.esercizio8.demo.Dto.Responses.User.UserPartialUpdateResponseDto;
 import com.esercizio8.demo.Dto.Responses.User.UserUpdateResponseDto;
 import com.esercizio8.demo.Service.UserService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,7 +17,6 @@ public class UserController {
 
     private final UserService userService;
 
-    @Autowired
     public UserController (UserService userService) { this.userService = userService; }
 
     @PostMapping
@@ -27,18 +25,18 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteUser(@Valid @PathVariable("id") UUID id) { userService.deleteUserById(id); }
+    public void deleteUser(@PathVariable("id") UUID id) { userService.deleteUserById(id); }
 
     @PutMapping("/{id}")
-    public UserUpdateResponseDto updateUser(@Valid @PathVariable("id") UUID id,
+    public UserUpdateResponseDto updateUser(@PathVariable("id") UUID id,
                                             @Valid @RequestBody UserUpdateRequestDto user) {
-        return userService.updateUser(user, id);
+        return userService.updateUser(id, user);
     }
 
     @PatchMapping("/{id}")
-    public UserPartialUpdateResponseDto updatePartialUser(@Valid @PathVariable("id") UUID id,
+    public UserPartialUpdateResponseDto updatePartialUser(@PathVariable("id") UUID id,
                                                           @Valid @RequestBody UserPartialUpdateRequestDto user) {
-        return userService.partialUpdateUser(user, id);
+        return userService.partialUpdateUser(id, user);
     }
 
 }

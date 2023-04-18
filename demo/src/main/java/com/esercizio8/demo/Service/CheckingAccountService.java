@@ -8,6 +8,8 @@ import com.esercizio8.demo.Dto.Responses.CheckingAccount.CheckingAccountUpdateRe
 import com.esercizio8.demo.Exception.CardExpireException;
 import com.esercizio8.demo.Exception.IbanAlreadyExistsException;
 import com.esercizio8.demo.Exception.ResourceNotFoundException;
+import com.esercizio8.demo.Helper.CheckingAccountHelper;
+import com.esercizio8.demo.Helper.UserHelper;
 import com.esercizio8.demo.Model.CheckingAccount;
 import com.esercizio8.demo.Model.User;
 import com.esercizio8.demo.Repository.CheckingAccountRepository;
@@ -26,38 +28,37 @@ public class CheckingAccountService {
     private ModelMapper modelMapper;
     CheckingAccountRepository checkingAccountRepository;
     UserRepository userRepository;
+    CheckingAccountHelper checkingAccountHelper;
+    UserHelper userHelper;
     @Autowired
     public CheckingAccountService(CheckingAccountRepository checkingAccountRepository,
-                                  UserRepository userRepository) {
+                                  UserRepository userRepository,
+                                  CheckingAccountHelper checkingAccountHelper,
+                                  UserHelper userHelper) {
+
         this.checkingAccountRepository = checkingAccountRepository;
         this.userRepository = userRepository;
+        this.checkingAccountHelper = checkingAccountHelper;
+        this.userHelper = userHelper;
     }
 
     public CheckingAccountCreateResponseDto registerCheckingAccount(CheckingAccountCreateRequestDto checkingAccount) {
-        if(checkingAccountRepository.existsByIban(checkingAccount.getIban())){
-           throw new IbanAlreadyExistsException("Iban is already assigned");
-        }
-        User user = userRepository.findById(checkingAccount.getId_user())
-                .orElseThrow(() -> new ResourceNotFoundException("User with id " + checkingAccount.getId_user() + " not found."));
+        checkingAccountHelper.checkIbanAlreadyExists(checkingAccount.getIban());
+        User user = userHelper.checkUserAlreadyExists(checkingAccount.getId_user());
 
         CheckingAccount checkingAccountSaved = modelMapper.map(checkingAccount, CheckingAccount.class);
         user.assignCheckingAccount(checkingAccountSaved);
-        CheckingAccount checkingAccountDto = checkingAccountRepository
-                                               .save(checkingAccountSaved);
 
-
-        return modelMapper.map(checkingAccountDto, CheckingAccountCreateResponseDto.class);
+        return modelMapper.map(checkingAccountRepository.save(checkingAccountSaved),
+                CheckingAccountCreateResponseDto.class);
     }
 
     public CheckingAccountUpdateResponseDto updateCheckingAccount(CheckingAccountUpdateRequestDto updateCheckingAccount, UUID id) {
 
-        CheckingAccount checkingAccount = checkingAccountRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("CheckingAccount with id " + id + " not found."));
+        CheckingAccount checkingAccount = checkingAccountHelper.checkCheckingAccountExists(id);
 
         if(!checkingAccount.getIban().equals(updateCheckingAccount.getIban())) {
-            if (checkingAccountRepository.existsByIban(updateCheckingAccount.getIban())) {
-                throw new IbanAlreadyExistsException("Iban is already assigned");
-            }
+            checkingAccountHelper.checkIbanAlreadyExists(updateCheckingAccount.getIban());
             checkingAccount.setIban(updateCheckingAccount.getIban());
         }
 
@@ -66,23 +67,20 @@ public class CheckingAccountService {
         checkingAccount.setValidThru(updateCheckingAccount.getValid_thru());
 
         return modelMapper.map(checkingAccountRepository.save(checkingAccount),
-                               CheckingAccountUpdateResponseDto.class);
+                CheckingAccountUpdateResponseDto.class);
     }
 
     public void deleteCheckingAccountById(UUID id) { checkingAccountRepository.deleteById(id); }
 
     public CheckingAccountGetBalanceResponseDto getBalanceById(UUID id) {
 
-        CheckingAccount checkingAccount = checkingAccountRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("CheckingAccount with id " + id + " not found."));
+        CheckingAccount checkingAccount = checkingAccountHelper.checkCheckingAccountExists(id);
 
         if(checkingAccount.getValidThru().isBefore(LocalDate.now())) {
             throw new CardExpireException("Card has expired");
         }
-        CheckingAccountGetBalanceResponseDto checkingAccountDto = new CheckingAccountGetBalanceResponseDto();
 
-        checkingAccountDto.setBalance(checkingAccount.getBalance());
-        return checkingAccountDto;
+        return new CheckingAccountGetBalanceResponseDto(checkingAccount.getBalance());
 
     }
 }

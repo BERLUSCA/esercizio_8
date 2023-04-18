@@ -5,6 +5,7 @@ import com.esercizio8.demo.Dto.Responses.User.UserPartialUpdateResponseDto;
 import com.esercizio8.demo.Dto.Responses.User.UserUpdateResponseDto;
 import com.esercizio8.demo.Exception.EmailAlreadyExistsException;
 import com.esercizio8.demo.Exception.ResourceNotFoundException;
+import com.esercizio8.demo.Helper.UserHelper;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import com.esercizio8.demo.Model.User;
@@ -21,16 +22,17 @@ public class UserService {
     @Autowired
     private ModelMapper modelMapper;
     private final UserRepository userRepository;
+    private final UserHelper userHelper;
 
     @Autowired
-    public UserService(UserRepository userRepository) { this.userRepository = userRepository; }
+    public UserService(UserRepository userRepository,
+                       UserHelper userHelper) {
+        this.userRepository = userRepository;
+        this.userHelper = userHelper;
+    }
 
     public UserCreateResponseDto registerUser(UserCreateRequestDto registerUser) {
-
-        if (userRepository.existsByEmail(registerUser.getEmail())) {
-            throw new EmailAlreadyExistsException("The email already exist, please insert another email");
-        }
-
+        userHelper.checkEmailAlreadyExists(registerUser.getEmail());
         User userSaved = userRepository.save(modelMapper.map(registerUser, User.class));
         return modelMapper.map(userSaved, UserCreateResponseDto.class);
     }
@@ -39,14 +41,12 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    public UserUpdateResponseDto updateUser(UserUpdateRequestDto updateUser, UUID id) {
-        User user = userRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("User with id " + id + " not found."));
+    public UserUpdateResponseDto updateUser(UUID id,
+                                            UserUpdateRequestDto updateUser) {
+        User user = userHelper.checkUserAlreadyExists(id);
 
         if (!user.getEmail().equals(updateUser.getEmail())) {
-            if (userRepository.existsByEmail(updateUser.getEmail())) {
-                throw new EmailAlreadyExistsException("This email is already assigned, please insert another email");
-            }
+            userHelper.checkEmailAlreadyExists(updateUser.getEmail());
             user.setEmail(updateUser.getEmail());
         }
 
@@ -57,22 +57,22 @@ public class UserService {
         return modelMapper.map(user, UserUpdateResponseDto.class);
     }
     
-    public UserPartialUpdateResponseDto partialUpdateUser(UserPartialUpdateRequestDto partialUpdateUser, UUID id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User with id " + id + " not found."));
+    public UserPartialUpdateResponseDto partialUpdateUser(UUID id,
+                                                          UserPartialUpdateRequestDto partialUpdateUser) {
+        User user = userHelper.checkUserAlreadyExists(id);
 
-        if (!Objects.isNull(partialUpdateUser.getFirstname())) {
+        if (!(partialUpdateUser.getFirstname() == null)) {
             user.setFirstName(partialUpdateUser.getFirstname());
         }
 
-        if (!Objects.isNull(partialUpdateUser.getLastname())) {
+        if (!(partialUpdateUser.getLastname() == null)) {
             user.setLastName(partialUpdateUser.getLastname());
         }
 
-        if (!Objects.isNull(partialUpdateUser.getEmail()) && !partialUpdateUser.getEmail().equals(user.getEmail())) {
-            if (userRepository.existsByEmail(partialUpdateUser.getEmail())) {
-                throw new EmailAlreadyExistsException("This email is already assigned, please insert another email");
-            }
+        if (!(partialUpdateUser.getEmail() == null) &&
+            !partialUpdateUser.getEmail().equals(user.getEmail())) {
+
+            userHelper.checkEmailAlreadyExists(partialUpdateUser.getEmail());
             user.setEmail(partialUpdateUser.getEmail());
         }
 

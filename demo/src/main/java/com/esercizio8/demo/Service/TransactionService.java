@@ -7,6 +7,7 @@ import com.esercizio8.demo.Dto.Responses.Transaction.TransactionDepositResponseD
 import com.esercizio8.demo.Dto.Responses.Transaction.TransactionHistoryResponseDto;
 import com.esercizio8.demo.Dto.Responses.Transaction.TransactionWithdrawalResponseDto;
 import com.esercizio8.demo.Exception.ResourceNotFoundException;
+import com.esercizio8.demo.Helper.TransactionHelper;
 import com.esercizio8.demo.Model.CheckingAccount;
 import com.esercizio8.demo.Model.Transaction;
 import com.esercizio8.demo.Repository.CheckingAccountRepository;
@@ -30,26 +31,26 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final CheckingAccountRepository checkingAccountRepository;
+    private final TransactionHelper transactionHelper;
 
     @Autowired
     public TransactionService(TransactionRepository transactionRepository,
-                              CheckingAccountRepository checkingAccountRepository) {
+                              CheckingAccountRepository checkingAccountRepository,
+                              TransactionHelper transactionHelper) {
+
         this.transactionRepository = transactionRepository;
         this.checkingAccountRepository = checkingAccountRepository;
+        this.transactionHelper = transactionHelper;
     }
 
 
     public TransactionDepositResponseDto makeDepositById(TransactionDepositRequestDto transactionDeposit, UUID id) {
-        CheckingAccount checkingAccount = checkingAccountRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("CheckingAccount with id " + id + " not found"));
+        CheckingAccount checkingAccount = transactionHelper.checkCheckingAccountExists(id);
 
         checkingAccount.setBalance(checkingAccount.getBalance() + transactionDeposit.getBalance());
 
-        Transaction transaction = new Transaction();
-        transaction.setType(Transaction.TransactionType.DEPOSIT);
-        transaction.setBalance(transactionDeposit.getBalance());
-        transaction.setCreatedAt(LocalDateTime.now());
-        transaction.setCheckingAccount(checkingAccount);
+        Transaction transaction = transactionHelper.createTransaction(Transaction.TransactionType.DEPOSIT,
+                                                                      transactionDeposit.getBalance(), checkingAccount);
         transactionRepository.save(transaction);
 
         return modelMapper.map(transaction, TransactionDepositResponseDto.class);
@@ -58,19 +59,20 @@ public class TransactionService {
 
     public TransactionWithdrawalResponseDto makeWithdrawalById(TransactionWithdrawalRequestDto transactionWithdrawal, UUID id) {
 
-        CheckingAccount checkingAccount = checkingAccountRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("CheckingAccount with id " + id + " not found"));
+        CheckingAccount checkingAccount = transactionHelper.checkCheckingAccountExists(id);
+
+        if(!(checkingAccount.getPin() == transactionWithdrawal.getPin())){
+            throw new ResourceNotFoundException("Pin is not correct");
+        }
 
         if(transactionWithdrawal.getBalance() > checkingAccount.getBalance()) {
-            throw new ResourceNotFoundException("Balance not available, Your balance is: " + checkingAccount.getBalance());
+            throw new ResourceNotFoundException("Balance not available, your balance is: " + checkingAccount.getBalance());
         }
+
         checkingAccount.setBalance(checkingAccount.getBalance() - transactionWithdrawal.getBalance());
 
-        Transaction transaction = new Transaction();
-        transaction.setType(Transaction.TransactionType.WITHDRAWAL);
-        transaction.setBalance(transactionWithdrawal.getBalance());
-        transaction.setCreatedAt(LocalDateTime.now());
-        transaction.setCheckingAccount(checkingAccount);
+        Transaction transaction = transactionHelper.createTransaction(Transaction.TransactionType.WITHDRAWAL,
+                transactionWithdrawal.getBalance(), checkingAccount);
 
         transactionRepository.save(transaction);
 
@@ -78,12 +80,14 @@ public class TransactionService {
 
     }
 
-    public List<TransactionHistoryResponseDto> getTransactionHistory(UUID id_card, int page, int size) {
+    public List<TransactionHistoryResponseDto> getTransactionHistory(UUID id_card,
+                                                                     int page,
+                                                                     int size) {
         List<Transaction> transactionHistory = transactionRepository
                                                .findAllByCheckingAccount_IdOrderByCreatedAtDesc(id_card, PageRequest.of(page, size, Sort.Direction.DESC, "createdAt"));
 
         if (transactionHistory.isEmpty()) {
-            throw new ResourceNotFoundException("Transaction history not found");
+            throw new ResourceNotFoundException("Transaction history not available");
         }
 
         List<TransactionHistoryResponseDto> transactionHistoryDto = transactionHistory.stream()

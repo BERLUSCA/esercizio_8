@@ -5,9 +5,13 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Data
 public class UserUpdateResponseDto {
 
+    @NotNull
+    private UUID id;
     @NotNull
     private String firstname;
     @NotNull

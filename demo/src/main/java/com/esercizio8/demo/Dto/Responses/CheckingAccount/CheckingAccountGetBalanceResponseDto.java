@@ -8,4 +8,8 @@ public class CheckingAccountGetBalanceResponseDto {
 
     @NotNull
     public float balance;
+
+    public CheckingAccountGetBalanceResponseDto(float balance) {
+        this.balance = balance;
+    }
 }
