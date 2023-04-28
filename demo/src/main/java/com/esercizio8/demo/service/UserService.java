@@ -39,7 +39,7 @@ public class UserService {
 
         user.setFirstName(updateUser.getFirstname());
         user.setLastName(updateUser.getLastname());
-        userRepository.save(user);
+        user = userRepository.save(user);
         return modelMapper.map(user, UserUpdateResponseDto.class);
     }
     
