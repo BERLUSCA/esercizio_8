@@ -5,6 +5,6 @@ import lombok.Data;
 
 @Data
 public class TransactionDepositRequestDto {
-    @NotNull(message = "insert the import")
+    @NotNull(message = "enter the amount")
     private float balance;
 }

@@ -62,20 +62,18 @@ public class TransactionService {
         return modelMapper.map(transaction, TransactionWithdrawalResponseDto.class);
     }
 
-    public List<TransactionHistoryResponseDto> getTransactionHistory(UUID id_card,
+    public List<TransactionHistoryResponseDto> getTransactionHistory(UUID idCard,
                                                                      int page,
                                                                      int size) {
         List<Transaction> transactionHistory = transactionRepository
-                                               .findAllByCheckingAccount_IdOrderByCreatedAtDesc(id_card, PageRequest.of(page, size, Sort.Direction.DESC, "createdAt"));
+                                               .findAllByCheckingAccount_IdOrderByCreatedAtDesc(idCard, PageRequest.of(page, size, Sort.Direction.DESC, "createdAt"));
 
         if (transactionHistory.isEmpty()) {
             throw new ResourceNotFoundException("Transaction history not available");
         }
 
-        List<TransactionHistoryResponseDto> transactionHistoryDto = transactionHistory.stream()
+        return transactionHistory.stream()
                 .map(transaction -> modelMapper.map(transaction, TransactionHistoryResponseDto.class))
                 .collect(Collectors.toList());
-
-        return transactionHistoryDto;
     }
 }

@@ -18,22 +18,22 @@ public class TransactionController {
     TransactionService transactionService;
     public TransactionController(TransactionService transactionService) { this.transactionService = transactionService; }
 
-    @PostMapping("/deposit/{id}")
+    @PostMapping("/deposit/{idTransaction}")
     public TransactionDepositResponseDto createDepositTransaction(@Valid @RequestBody TransactionDepositRequestDto transactionDeposit,
-                                                                  @PathVariable UUID id) {
-        return transactionService.makeDepositById(transactionDeposit, id);
+                                                                  @PathVariable UUID idTransaction) {
+        return transactionService.makeDepositById(transactionDeposit, idTransaction);
     }
 
-    @PostMapping("/withdrawal/{id}")
+    @PostMapping("/withdrawal/{idTransaction}")
     public TransactionWithdrawalResponseDto createWithdrawalTransaction(@Valid @RequestBody TransactionWithdrawalRequestDto transactionWithdrawal,
-                                                                        @PathVariable UUID id) {
-        return transactionService.makeWithdrawalById(transactionWithdrawal, id);
+                                                                        @PathVariable UUID idTransaction) {
+        return transactionService.makeWithdrawalById(transactionWithdrawal, idTransaction);
     }
 
     @GetMapping("/{id_card}")
-    public List<TransactionHistoryResponseDto> getHistoryTransaction(@PathVariable UUID id_card,
+    public List<TransactionHistoryResponseDto> getHistoryTransaction(@PathVariable UUID idCard,
                                                                      @RequestParam int page,
                                                                      @RequestParam int size) {
-        return transactionService.getTransactionHistory(id_card, page, size);
+        return transactionService.getTransactionHistory(idCard, page, size);
     }
 }
